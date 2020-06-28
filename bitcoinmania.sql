@@ -25,6 +25,7 @@ CREATE TABLE `user` (
   `name` varchar(500) DEFAULT NULL,
   `lastname` varchar(500) DEFAULT NULL,
   `login` varchar(500) DEFAULT NULL,
+  `mail` text,
   `pwd` text,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
