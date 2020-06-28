@@ -9,6 +9,7 @@ import javafx.stage.Stage;
 import org.bitcoin.model.User;
 import org.bitcoin.utils.Error;
 import org.bitcoin.utils.Logger;
+import org.bitcoin.utils.Modal;
 
 import java.io.IOException;
 
@@ -40,12 +41,18 @@ public class App extends Application {
         Parent root = null;
         try {
             root = FXMLLoader.load(getClass().getResource("/login.fxml"));
+            App.stage.setWidth(600);
+            App.stage.setHeight(450);
+            App.stage.setMinWidth(600);
+            App.stage.setMinHeight(450);
+            App.stage.setMaxWidth(600);
+            App.stage.setMaxHeight(450);
             App.stage.setTitle("BitcoinMania");
             App.stage.getIcons().add(new Image("/Bitcoin.png"));
             App.stage.setScene(new Scene(root));
             App.stage.show();
         } catch (IOException exception) {
-            Error.showModalError(exception.getMessage());
+            Modal.showModalError(exception.getMessage());
         }
     }
 
