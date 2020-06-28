@@ -12,6 +12,7 @@ import javafx.scene.image.Image;
 
 import org.bitcoin.utils.BitcoinmaniaException;
 import org.bitcoin.utils.Error;
+import org.bitcoin.utils.Modal;
 
 import java.io.IOException;
 
@@ -33,6 +34,10 @@ public class LoginController {
     private TextField mailText;
     @FXML
     private PasswordField pwdText;
+    @FXML
+    private PasswordField pwdConnexionText;
+    @FXML
+    private TextField loginConnexionText;
 
     @FXML
     public void registerUser(ActionEvent actionEvent) {
@@ -45,14 +50,12 @@ public class LoginController {
         try {
             isRegister = App.user.register();
         } catch (BitcoinmaniaException exception) {
-            Error.showModalError(exception.getMsgError());
+            Modal.showModalError(exception.getMsgError());
             return;
         }
 
         if(isRegister) {
-            Alert a = new Alert(Alert.AlertType.INFORMATION);
-            a.setContentText("L'utilisateur à bien été enregistrer");
-            a.show();
+            Modal.showModalInfo("L'utilisateur à bien été enregistrer");
             Parent root = null;
             try {
                 root = FXMLLoader.load(getClass().getResource("/bitcoin.fxml"));
@@ -60,10 +63,37 @@ public class LoginController {
                 App.stage.show();
                 return;
             } catch (Exception exception) {
-                Error.showModalError(exception.getMessage());
+                Modal.showModalError(exception.getMessage());
                 return;
             }
         }
-        Error.showModalError(Error.ERROR_USER_REGISTER_MSG);
+        Modal.showModalError(Error.ERROR_USER_REGISTER_MSG);
+    }
+
+    public void loginUser(ActionEvent actionEvent) {
+        App.user.setLogin(loginConnexionText.getText());
+        App.user.setPwd(pwdConnexionText.getText());
+        boolean isLogin = false;
+        try {
+            isLogin = App.user.login();
+        } catch (BitcoinmaniaException exception) {
+            Modal.showModalError(exception.getMsgError());
+            return;
+        }
+
+        if(isLogin) {
+            Modal.showModalInfo("L'utilisateur à bien été connecté");
+            Parent root = null;
+            try {
+                root = FXMLLoader.load(getClass().getResource("/bitcoin.fxml"));
+                App.stage.setScene(new Scene(root));
+                App.stage.show();
+                return;
+            } catch (Exception exception) {
+                Modal.showModalError(exception.getMessage());
+                return;
+            }
+        }
+        Modal.showModalError(Error.ERROR_USER_LOGIN_MSG);
     }
 }
