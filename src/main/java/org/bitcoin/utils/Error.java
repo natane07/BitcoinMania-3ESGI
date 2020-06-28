@@ -24,17 +24,13 @@ public class Error {
     public static final String ERROR_CHECK_USER_MAIL_EXIST_MSG = "L'adresse mail existe déja";
     public static final int ERROR_CHECK_USER_LOGIN_EXIST_CODE = 205;
     public static final String ERROR_CHECK_USER_LOGIN_EXIST_MSG = "Le login existe déja";
+    public static final int ERROR_USER_LOGIN_CODE = 206;
+    public static final String ERROR_USER_LOGIN_MSG = "Erreur lors de la connexion";
 
     // Logger
     public static final int ERROR_LOGGER_DIR_FILES_LIST = 500;
     public static final int ERROR_LOGGER_DIR_CONTAINS_BAD_FILE = 501;
     public static final int ERROR_LOGGER_PARSE_LOGS_FILE_DATE = 502;
     public static final int ERROR_LOGGER_REMOVE_FILE = 503;
-
-    public static void showModalError(final String msg) {
-        Alert a = new Alert(Alert.AlertType.ERROR);
-        a.setContentText(msg);
-        a.show();
-    }
 }
 
