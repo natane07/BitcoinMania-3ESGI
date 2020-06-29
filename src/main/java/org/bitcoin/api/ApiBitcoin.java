@@ -47,4 +47,80 @@ public class ApiBitcoin {
         }
         return money;
     }
+
+    public static String getSymbolvalue(String key) {
+        App.logger.debug("getSymbolvalue");
+        JSONObject value = json.getJSONObject(key);
+        return value.getString("symbol");
+    }
+
+    public static Double getlastPriceBitcoinvalue(String key) {
+        App.logger.debug("getlastPriceBitcoinvalue");
+        JSONObject value = json.getJSONObject(key);
+        return value.getDouble("last");
+    }
+
+    public static ArrayList<String> currentPriceMarketBitcoin(String dateStart, String dateFinish) {
+        final String apiCoindesk = "https://api.coindesk.com/v1/bpi/historical/close.json?start=" + dateStart + "&end=" + dateFinish;
+        HttpClient httpCoindesk = HttpClient.getHttp().setBaseUri(apiCoindesk);
+        App.logger.debug("Call api: " + apiCoindesk);
+        String response = httpCoindesk.fetch("", "GET");
+        System.out.println(response);
+
+        JSONObject jsonBitcoin = new JSONObject(response);
+        System.out.println(jsonBitcoin);
+
+        jsonCoindesk = jsonBitcoin.getJSONObject("bpi");
+        System.out.println(jsonCoindesk);
+        ArrayList<String> moneyUs = new ArrayList<>();
+        try {
+            Iterator<String> keys = jsonCoindesk.keys();
+            while(keys.hasNext()) {
+                String key = keys.next();
+                moneyUs.add(key);
+            }
+        } catch (Exception exception) {
+            Modal.showModalError(exception.getMessage());
+        }
+        Collections.sort(moneyUs);
+        return moneyUs;
+    }
+
+    public static Double getPriceBitcoinWithDate(String key) {
+        return jsonCoindesk.getDouble(key);
+    }
+
+    public static Double getMaxPriceBitcoin() {
+        Double maxValue = 0.0;
+        try {
+            Iterator<String> keys = jsonCoindesk.keys();
+            while(keys.hasNext()) {
+                String key = keys.next();
+                Double value = jsonCoindesk.getDouble(key);
+                if (value > maxValue) {
+                    maxValue = value;
+                }
+            }
+        } catch (Exception exception) {
+            Modal.showModalError(exception.getMessage());
+        }
+        return maxValue;
+    }
+
+    public static Double getMinPriceBitcoin() {
+        Double minValue = Double.MAX_VALUE;
+        try {
+            Iterator<String> keys = jsonCoindesk.keys();
+            while(keys.hasNext()) {
+                String key = keys.next();
+                Double value = jsonCoindesk.getDouble(key);
+                if (value < minValue) {
+                    minValue = value;
+                }
+            }
+        } catch (Exception exception) {
+            Modal.showModalError(exception.getMessage());
+        }
+        return minValue;
+    }
 }
