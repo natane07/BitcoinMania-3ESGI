@@ -1,5 +1,6 @@
 package org.bitcoin.app;
 
+import com.sun.glass.ui.CommonDialogs;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -15,16 +16,16 @@ import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
+import javafx.stage.FileChooser;
 import org.apache.commons.codec.binary.StringUtils;
 import org.bitcoin.api.ApiBitcoin;
 import org.bitcoin.utils.Modal;
 
+import java.io.File;
 import java.net.URL;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.ResourceBundle;
+import java.util.*;
 
 /**
  * Controller pour l'interface Bitcoin
@@ -32,6 +33,11 @@ import java.util.ResourceBundle;
  */
 public class BitcoinController implements Initializable {
 
+    private String minDateGraphique;
+
+    private String maxDateGraphique;
+
+    // Onglet graphique
     @FXML
     private LineChart<Number, Number> lineChartGraphique;
     @FXML
@@ -58,6 +64,27 @@ public class BitcoinController implements Initializable {
     private XYChart.Series lineSeuilBas;
 
     private XYChart.Series lineSeuilHaut;
+
+    // Onglet import fichier excel
+
+    @FXML
+    private Label urlFile;
+
+    @Override
+    public void initialize(URL url, ResourceBundle resourceBundle) {
+        App.logger.debug("initialize BitcoinController");
+        DateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        Calendar calendar = Calendar.getInstance();
+        maxDateGraphique = format.format(calendar.getTime());
+        calendar.add(Calendar.MONTH, -1);
+        minDateGraphique = format.format(calendar.getTime());
+        generateChartLine(minDateGraphique, maxDateGraphique);
+        App.logger.debug("API OK");
+        setComboBoxMoneyValue();
+        String money = ApiBitcoin.getSymbolvalue("EUR");
+        Double mostMarketPlaceValue = ApiBitcoin.getlastPriceBitcoinvalue("EUR");
+        setCourBitcoinValue(mostMarketPlaceValue, money);
+    }
 
     public void generateChartLine(String dateDebut, String dateFin) {
         App.logger.debug("Generate Chart Line");
@@ -91,21 +118,15 @@ public class BitcoinController implements Initializable {
         }
 
         if (dateDebutFormat.compareTo(dateFinFormat) <= 0) {
+            App.logger.debug(dateDebut.getValue().toString() + " " + dateFin.getValue().toString());
             generateChartLine(dateDebut.getValue().toString(), dateFin.getValue().toString());
+            minDateGraphique = dateDebut.getValue().toString();
+            maxDateGraphique = dateFin.getValue().toString();
+            // supprime les seuils
+            lineChartGraphique.getData().removeAll(lineSeuilBas, lineSeuilHaut);
         } else {
           Modal.showModalError("La date de début est supérieur à la date de fin");
         }
-    }
-
-    @Override
-    public void initialize(URL url, ResourceBundle resourceBundle) {
-        App.logger.debug("initialize BitcoinController");
-        generateChartLine("2020-06-01", "2020-06-28");
-        App.logger.debug("API OK");
-        setComboBoxMoneyValue();
-        String money = ApiBitcoin.getSymbolvalue("EUR");
-        Double mostMarketPlaceValue = ApiBitcoin.getlastPriceBitcoinvalue("EUR");
-        setCourBitcoinValue(mostMarketPlaceValue, money);
     }
 
     public void changeMoney(ActionEvent actionEvent) {
@@ -151,7 +172,7 @@ public class BitcoinController implements Initializable {
             return;
         }
         lineChartGraphique.getData().removeAll(lineSeuilBas, lineSeuilHaut);
-        var apiMoneyDollard = ApiBitcoin.currentPriceMarketBitcoin("2020-06-01", "2020-06-28");
+        var apiMoneyDollard = ApiBitcoin.currentPriceMarketBitcoin(minDateGraphique, maxDateGraphique);
 
         lineSeuilBas = new XYChart.Series();
         lineSeuilBas.setName("Seuil bas");
@@ -175,4 +196,12 @@ public class BitcoinController implements Initializable {
         }
     }
 
+    public void importFile(ActionEvent actionEvent) {
+        FileChooser file = new FileChooser();
+        file.getExtensionFilters().add(new FileChooser.ExtensionFilter("Fichier xlsx", "*.xlsx"));
+        File f = file.showOpenDialog(null);
+        if(f != null) {
+            urlFile.setText("Chemin du fichier : " + f.getAbsolutePath());
+        }
+    }
 }
