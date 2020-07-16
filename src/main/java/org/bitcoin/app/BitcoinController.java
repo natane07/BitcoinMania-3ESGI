@@ -500,6 +500,40 @@ public class BitcoinController implements Initializable {
         lineTransform.add(line);
         return lineTransform;
     }
+
+    // Onglet mon compte
+    public void saveChangeUser(ActionEvent actionEvent) {
+        String newPwdString = newPwd.getText();
+        String confirmPwdString = confirmPwd.getText();
+        if(newPwdString.isBlank() || confirmPwdString.isBlank()) {
+            Modal.showModalError(Error.ERROR_CHECK_USER_DATA_MSG);
+            App.logger.error(Error.ERROR_CHECK_USER_DATA_CODE, Error.ERROR_CHECK_USER_DATA_MSG, null);
+            return;
+        }
+        App.logger.debug(newPwdString + " " + confirmPwdString);
+        if (!newPwdString.equals(confirmPwdString)) {
+            Modal.showModalError(Error.ERROR_USER_SAVE_CHANGE_MSG);
+            App.logger.error(Error.ERROR_USER_SAVE_CHANGE_CODE, Error.ERROR_USER_SAVE_CHANGE_MSG, null);
+            return;
+        }
+
+        // Mise a jour du pwd et de la monnaie
+        App.user.setMoney(comboBoxMoneyUser.getValue().toString());
+        boolean save = false;
+        try {
+            save = App.user.saveChange(newPwdString);
+        } catch (BitcoinmaniaException error) {
+            App.logger.error(error.getCodeError(), error.getMessage(), error);
+            Modal.showModalError(error.getMsgError());
+        }
+
+        if (!save){
+            Modal.showModalError("Erreur lors de la sauvegarde des informations");
+        } else {
+            Modal.showModalInfo("Les informations de l'utilisateur ont bien été sauvegardé");
+            newPwd.setText("");
+            confirmPwd.setText("");
         }
     }
+
 }

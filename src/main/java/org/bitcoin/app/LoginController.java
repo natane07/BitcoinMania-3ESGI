@@ -46,6 +46,8 @@ public class LoginController {
         App.user.setMail(mailText.getText());
         App.user.setLogin(loginText.getText());
         App.user.setPwd(pwdText.getText());
+        App.user.setMoney("");
+
         boolean isRegister = false;
         try {
             isRegister = App.user.register();
