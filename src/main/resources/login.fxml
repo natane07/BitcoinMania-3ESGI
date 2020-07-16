@@ -43,7 +43,7 @@
                                           <Font name="System Bold" size="13.0" />
                                        </font>
                                     </Label>
-                                    <TextField fx:id="loginConnexionText" alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="25.0" prefWidth="190.0" GridPane.columnIndex="1" />
+                                    <TextField fx:id="loginConnexionText" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="25.0" prefWidth="190.0" GridPane.columnIndex="1" />
                                     <PasswordField fx:id="pwdConnexionText" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="25.0" prefWidth="190.0" GridPane.columnIndex="1" GridPane.halignment="LEFT" GridPane.rowIndex="1" GridPane.valignment="CENTER" />
                                  </children>
                               </GridPane>

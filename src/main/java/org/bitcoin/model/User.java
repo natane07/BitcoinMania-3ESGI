@@ -23,6 +23,7 @@ public class User {
     private String login = "";
     private String pwd = "";
     private String mail = "";
+    private String money = "";
 
     public boolean register() throws BitcoinmaniaException {
         // Verification des données de l'utilisateur
@@ -100,6 +101,7 @@ public class User {
                 name = resultSet.getString("name");
                 lastname = resultSet.getString("lastname");
                 mail = resultSet.getString("mail");
+                money = resultSet.getString("money") == null ? "" : resultSet.getString("money");
                 App.logger.info("User login with:" + login);
                 return true;
             }
@@ -111,6 +113,32 @@ public class User {
             database.close();
         }
         return false;
+    }
+
+    public boolean saveChange(final String pwdString) throws BitcoinmaniaException {
+        // Mise a jour d'une ligne
+        final Database database = new Database(true);
+        final Statement statement = database.getStatement();
+        final String sha256HexPwd = DigestUtils.sha256Hex(pwdString);
+        final String query = "UPDATE `user` SET pwd = '" + sha256HexPwd + "', money = '"+ money + "' WHERE login = '" + login + "'";
+        int result = 0;
+        try {
+            App.logger.debug("Update line on database: \"" + query + "\"");
+            result = statement.executeUpdate(query);
+        } catch (SQLException exception) {
+            throw new BitcoinmaniaException(Error.ERROR_INTERNAL_CODE,
+                    "Error getting select result of \""+ query + "\": ",
+                    exception);
+        } finally {
+            database.close();
+        }
+
+        // Vérification du résultat
+        if (result < 1) {
+            return false;
+        }
+        App.user.setPwd(pwdString);
+        return true;
     }
 
     private boolean checkLoginExist() throws BitcoinmaniaException {
@@ -239,5 +267,9 @@ public class User {
     public void setMail(String mail) {
         this.mail = mail;
     }
+
+    public String getMoney() { return money; }
+
+    public void setMoney(String money) { this.money = money; }
 
 }
