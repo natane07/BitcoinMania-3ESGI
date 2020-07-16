@@ -8,6 +8,7 @@ import java.util.*;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.bitcoin.app.App;
 
 public class Import {
 
@@ -120,6 +121,58 @@ public class Import {
                 if ((gap > threshold || gap < -threshold) && date_diff <= date_limit) {
                     Rcd.add(new Recording(lines.get(i), lines.get(j), gap, date_diff));
                 }
+            }
+        }
+        return Rcd;
+    }
+
+    /**
+     * Récupération dans une arraylist des hausse rapides
+     * @param lines ArrayList<Line>
+     * @param threshold valeur Seuil
+     * @param date_limit l'écart entre les deux dates considéré comme rapide Minute
+     * @return
+     */
+    public ArrayList<Recording> get_fast_changes_minute (ArrayList<Line> lines, double threshold, long date_limit) {
+        double gap;
+        long date_diff;
+        ArrayList<Recording> Rcd = new ArrayList<>();
+        int date_limit_minute = 1;
+        if (date_limit > 5) {
+            date_limit_minute = (int) (date_limit / 5);
+        }
+        for (int i = 0; i < lines.size() - date_limit_minute; i++) {
+            gap = lines.get(i).getCurrent() - lines.get(i + date_limit_minute).getCurrent();
+            date_diff = (lines.get(i + date_limit_minute).getDate().getTime() - lines.get(i).getDate().getTime()) / 1000;
+
+            if ((gap < -threshold) && date_diff <= date_limit * 60) {
+                Rcd.add(new Recording(lines.get(i), lines.get(i + date_limit_minute), gap, date_diff));
+            }
+        }
+        return Rcd;
+    }
+
+    /**
+     * Récupération dans une arraylist des baisses rapides
+     * @param lines ArrayList<Line>
+     * @param threshold valeur Seuil
+     * @param date_limit l'écart entre les deux dates considéré comme rapide Minute
+     * @return
+     */
+    public ArrayList<Recording> get_low_changes_minute (ArrayList<Line> lines, double threshold, long date_limit) {
+        double gap;
+        long date_diff;
+        ArrayList<Recording> Rcd = new ArrayList<>();
+        int date_limit_minute = 1;
+        if (date_limit > 5) {
+            date_limit_minute = (int) (date_limit / 5);
+        }
+        for (int i = date_limit_minute; i < lines.size(); i++) {
+            gap = lines.get(i).getCurrent() - lines.get(i - date_limit_minute).getCurrent();
+            date_diff = (lines.get(i - date_limit_minute).getDate().getTime() - lines.get(i).getDate().getTime()) / 1000;
+
+            if ((gap > threshold) && date_diff <= date_limit * 60) {
+                Rcd.add(new Recording(lines.get(i), lines.get(i - date_limit_minute), gap, date_diff));
             }
         }
         return Rcd;

@@ -1,5 +1,8 @@
 package org.bitcoin.excel;
 
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+
 public class Recording {
 
     Line start;
@@ -48,11 +51,26 @@ public class Recording {
 
     @Override
     public String toString() {
-        return "Recording{" +
-                "start=" + start +
-                ", end=" + end +
-                ", gap=" + gap +
-                ", date_diff=" + date_diff +
-                '}';
+        DecimalFormat df = new DecimalFormat("###.##");
+        SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy H:m");
+        String dateStringStart = format.format(start.getDate());
+        String dateStringEnd = format.format(end.getDate());
+        String message = "Hausse de " + df.format(abs(gap)) + ", entre le " + dateStringStart + " et le " + dateStringEnd;
+        return message;
+    }
+
+    public String toStringBaisse() {
+        DecimalFormat df = new DecimalFormat("###.##");
+        SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy H:m");
+        String dateStringStart = format.format(start.getDate());
+        String dateStringEnd = format.format(end.getDate());
+        String message = "Baisse de " + df.format(abs(gap)) + ", entre le " + dateStringStart + " et le " + dateStringEnd;
+        return message;
+    }
+
+    private Double abs(double gap) {
+        if(gap < 0)
+            return gap * -1;
+        return gap;
     }
 }

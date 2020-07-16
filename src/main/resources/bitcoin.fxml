@@ -7,6 +7,7 @@
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.DatePicker?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TextField?>
@@ -68,39 +69,77 @@
                   <content>
                     <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                            <children>
-                              <LineChart layoutX="53.0" layoutY="14.0" prefHeight="284.0" prefWidth="494.0">
-                                <xAxis>
-                                  <CategoryAxis fx:id="categoriAxisTest" side="BOTTOM" />
-                                </xAxis>
-                                <yAxis>
-                                  <NumberAxis side="LEFT" />
-                                </yAxis>
+                              <LineChart fx:id="lineChartGraphiqueExcel" layoutX="6.0" layoutY="14.0" prefHeight="270.0" prefWidth="589.0" title="Bitcoin excel">
+                                  <xAxis>
+                                      <CategoryAxis fx:id="xNumberAxisExcel" />
+                                  </xAxis>
+                                  <yAxis>
+                                      <NumberAxis fx:id="yNumberAxisExcel" forceZeroInRange="false" side="LEFT" tickLabelGap="0.0" upperBound="300.0" />
+                                  </yAxis>
                               </LineChart>
-                              <Button layoutX="63.0" layoutY="301.0" mnemonicParsing="false" onAction="#importFile" prefHeight="33.0" prefWidth="123.0" text="Importer un fichier" />
-                              <Label fx:id="urlFile" layoutX="210.0" layoutY="307.0" prefHeight="20.0" prefWidth="337.0" text="Chemin du fichier :" textAlignment="CENTER">
+                              <Button layoutX="14.0" layoutY="318.0" mnemonicParsing="false" onAction="#importFile" prefHeight="26.0" prefWidth="123.0" text="Importer un fichier" />
+                              <Label fx:id="urlFile" layoutX="6.0" layoutY="14.0" prefHeight="20.0" prefWidth="236.0" text="Nom du fichier :" textAlignment="CENTER">
                                  <font>
                                     <Font name="System Bold" size="14.0" />
                                  </font>
                               </Label>
+                              <TextField fx:id="seuilExcel" alignment="CENTER" layoutX="163.0" layoutY="306.0" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="25.0" prefWidth="176.0" promptText="Seuil bas" />
+                              <Button alignment="CENTER" layoutX="368.0" layoutY="306.0" mnemonicParsing="false" onAction="#addSeuilExcel" prefHeight="25.0" prefWidth="98.0" text="Ajouter" />
+                              <Button alignment="CENTER" layoutX="477.0" layoutY="306.0" mnemonicParsing="false" onAction="#removeSeuilExcel" prefHeight="25.0" prefWidth="99.0" text="Supprimer" textAlignment="CENTER" />
+                              <TextField fx:id="nbMinute" alignment="CENTER" layoutX="163.0" layoutY="339.0" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="25.0" prefWidth="177.0" promptText="Nombre de minute " />
+                              <Button alignment="CENTER" contentDisplay="CENTER" layoutX="368.0" layoutY="338.0" mnemonicParsing="false" onAction="#lowChangeExcel" prefHeight="26.0" prefWidth="99.0" text="Baisse rapides" textAlignment="CENTER" />
+                              <Button alignment="CENTER" contentDisplay="CENTER" layoutX="477.0" layoutY="338.0" mnemonicParsing="false" onAction="#fastChangeExcel" prefHeight="26.0" prefWidth="101.0" text="Hausse rapides" textAlignment="CENTER" />
                            </children>
                         </AnchorPane>
                   </content>
                 </Tab>
-                  <Tab text="Export donnée">
+                  <Tab text="Mon compte">
                     <content>
                       <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                            <children>
-                              <GridPane prefHeight="373.0" prefWidth="600.0">
+                              <GridPane prefHeight="326.0" prefWidth="600.0">
                                  <columnConstraints>
-                                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-                                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                    <ColumnConstraints hgrow="SOMETIMES" maxWidth="314.0" minWidth="10.0" prefWidth="303.0" />
+                                    <ColumnConstraints hgrow="SOMETIMES" maxWidth="302.0" minWidth="10.0" prefWidth="297.0" />
                                  </columnConstraints>
                                  <rowConstraints>
-                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                    <RowConstraints maxHeight="75.0" minHeight="-Infinity" prefHeight="75.0" valignment="CENTER" vgrow="SOMETIMES" />
+                                    <RowConstraints maxHeight="111.0" minHeight="-Infinity" prefHeight="86.0" valignment="CENTER" />
+                                    <RowConstraints maxHeight="111.0" minHeight="-Infinity" prefHeight="87.0" vgrow="SOMETIMES" />
+                                    <RowConstraints maxHeight="78.0" minHeight="-Infinity" prefHeight="78.0" vgrow="SOMETIMES" />
                                  </rowConstraints>
+                                 <children>
+                                    <Label text="Nouveau mot de passe :" GridPane.halignment="CENTER" GridPane.rowIndex="1">
+                                       <font>
+                                          <Font name="System Bold" size="13.0" />
+                                       </font>
+                                    </Label>
+                                    <Label text="Confirmer mot de passe :" GridPane.halignment="CENTER" GridPane.rowIndex="2">
+                                       <font>
+                                          <Font name="System Bold" size="13.0" />
+                                       </font>
+                                    </Label>
+                                    <Label text="Nom - Prenom" GridPane.halignment="CENTER" GridPane.valignment="CENTER">
+                                       <font>
+                                          <Font name="System Bold" size="13.0" />
+                                       </font>
+                                    </Label>
+                                    <Label text="Monnaie :" GridPane.halignment="CENTER" GridPane.rowIndex="3">
+                                       <font>
+                                          <Font name="System Bold" size="13.0" />
+                                       </font>
+                                    </Label>
+                                    <Label fx:id="nameUser" prefHeight="20.0" prefWidth="245.0" textAlignment="CENTER" GridPane.columnIndex="1">
+                                       <font>
+                                          <Font name="System Bold" size="14.0" />
+                                       </font>
+                                    </Label>
+                                    <PasswordField fx:id="newPwd" maxHeight="-Infinity" maxWidth="-Infinity" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                    <PasswordField fx:id="confirmPwd" maxHeight="-Infinity" maxWidth="-Infinity" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                                    <ComboBox fx:id="comboBoxMoneyUser" prefHeight="25.0" prefWidth="141.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                                 </children>
                               </GridPane>
+                              <Button layoutX="237.0" layoutY="326.0" mnemonicParsing="false" onAction="#saveChangeUser" prefHeight="25.0" prefWidth="127.0" text="Enregistrer" />
                            </children>
                         </AnchorPane>
                     </content>

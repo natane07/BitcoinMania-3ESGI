@@ -1,29 +1,32 @@
 package org.bitcoin.app;
+import javafx.scene.layout.BorderPane;
+import org.bitcoin.utils.Error;
 
-import com.sun.glass.ui.CommonDialogs;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.Scene;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.DatePicker;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
-import javafx.scene.layout.HBox;
+import javafx.scene.control.*;
 import javafx.stage.FileChooser;
-import org.apache.commons.codec.binary.StringUtils;
 import org.bitcoin.api.ApiBitcoin;
+import org.bitcoin.excel.Import;
+import org.bitcoin.excel.Line;
+import org.bitcoin.excel.Recording;
+import org.bitcoin.utils.BitcoinmaniaException;
 import org.bitcoin.utils.Modal;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -70,6 +73,52 @@ public class BitcoinController implements Initializable {
     @FXML
     private Label urlFile;
 
+    @FXML
+    private LineChart<String, Number> lineChartGraphiqueExcel;
+
+    @FXML
+    private CategoryAxis xNumberAxisExcel;
+
+    @FXML
+    private NumberAxis yNumberAxisExcel;
+
+    @FXML
+    private TextField seuilExcel;
+
+    @FXML
+    private TextField nbMinute;
+
+    private XYChart.Series lineSeuilExcel;
+
+    private XYChart.Series seriesExcel;
+
+    private String urlFileExcel;
+
+    public String getUrlFileExcel() {
+        return urlFileExcel;
+    }
+
+    public void setUrlFileExcel(String urlFileExcel) {
+        this.urlFileExcel = urlFileExcel;
+    }
+
+    private ArrayList<Line> linesExcel;
+
+    private ArrayList<Line> newTabMoyenne = new ArrayList<Line>();
+
+    // Onglet mon compte
+    @FXML
+    private PasswordField newPwd;
+
+    @FXML
+    private PasswordField confirmPwd;
+
+    @FXML
+    private ComboBox comboBoxMoneyUser;
+
+    @FXML
+    private Label nameUser;
+
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         App.logger.debug("initialize BitcoinController");
@@ -80,10 +129,13 @@ public class BitcoinController implements Initializable {
         minDateGraphique = format.format(calendar.getTime());
         generateChartLine(minDateGraphique, maxDateGraphique);
         App.logger.debug("API OK");
-        setComboBoxMoneyValue();
-        String money = ApiBitcoin.getSymbolvalue("EUR");
-        Double mostMarketPlaceValue = ApiBitcoin.getlastPriceBitcoinvalue("EUR");
+        final String moneyUser = App.user.getMoney().isEmpty() ? "EUR" : App.user.getMoney();
+        setComboBoxMoneyValue(moneyUser);
+        setComboBoxMoneyValueUser(moneyUser);
+        final String money = ApiBitcoin.getSymbolvalue(moneyUser);
+        final Double mostMarketPlaceValue = ApiBitcoin.getlastPriceBitcoinvalue(moneyUser);
         setCourBitcoinValue(mostMarketPlaceValue, money);
+        nameUser.setText(App.user.getLastname() + " " + App.user.getName());
     }
 
     public void generateChartLine(String dateDebut, String dateFin) {
@@ -136,15 +188,25 @@ public class BitcoinController implements Initializable {
         setCourBitcoinValue(mostMarketPlaceValue, money);
     }
 
-    private void setComboBoxMoneyValue() {
+    private void setComboBoxMoneyValue(final String moneyString) {
         var money = ApiBitcoin.getAllExchange();
         System.out.println(money);
         ObservableList<String> list = FXCollections.observableArrayList(money);
-        comboBoxMoney.setValue("EUR");
+        comboBoxMoney.setValue(moneyString);
         comboBoxMoney.setItems(list);
     }
+
+    private void setComboBoxMoneyValueUser(final String moneyString) {
+        var money = ApiBitcoin.getAllExchange();
+        ObservableList<String> list = FXCollections.observableArrayList(money);
+        comboBoxMoneyUser.setValue(moneyString);
+        comboBoxMoneyUser.setItems(list);
+    }
+
     private void setCourBitcoinValue(Double value, String money) {
-        courBitcoin.setText("Cours du bitcoin: " + value + money);
+        ByteBuffer buffer = StandardCharsets.UTF_8.encode(money);
+        String utf8EncodedString = StandardCharsets.UTF_8.decode(buffer).toString();
+        courBitcoin.setText("Cours du bitcoin: " + value + utf8EncodedString);
     }
 
     public void removeSeuil(ActionEvent actionEvent) {
@@ -180,7 +242,7 @@ public class BitcoinController implements Initializable {
         lineSeuilBas.getData().add(new XYChart.Data(apiMoneyDollard.get(apiMoneyDollard.size() - 1), seuilBasNumeric));
 
         lineSeuilHaut = new XYChart.Series();
-        lineSeuilHaut.setName("Seuil bas");
+        lineSeuilHaut.setName("Seuil haut");
         lineSeuilHaut.getData().add(new XYChart.Data(apiMoneyDollard.get(0), seuilHautNumeric));
         lineSeuilHaut.getData().add(new XYChart.Data(apiMoneyDollard.get(apiMoneyDollard.size() - 1), seuilHautNumeric));
 
@@ -196,12 +258,248 @@ public class BitcoinController implements Initializable {
         }
     }
 
+    @FXML
     public void importFile(ActionEvent actionEvent) {
+        Alert a = new Alert(Alert.AlertType.INFORMATION);
+        a.setHeaderText(null);
+        a.setContentText("Chargement du fichier...");
+        a.show();
+
         FileChooser file = new FileChooser();
         file.getExtensionFilters().add(new FileChooser.ExtensionFilter("Fichier xlsx", "*.xlsx"));
         File f = file.showOpenDialog(null);
-        if(f != null) {
-            urlFile.setText("Chemin du fichier : " + f.getAbsolutePath());
+        if (f == null) {
+            Modal.showModalError("Erreur lors du chargement du fichier");
+            return;
+        }
+
+        urlFile.setText("Nom du fichier : " + f.getName());
+        urlFileExcel = f.getAbsolutePath();
+        Import importFile = new Import();
+        try {
+            linesExcel = importFile.getTab(urlFileExcel, -1);
+            App.logger.debug(linesExcel.toString());
+            generateChartLineExcel(linesExcel);
+
+        } catch (IOException e) {
+            Modal.showModalError(e.getMessage());
+            return;
+        }
+        a.close();
+    }
+
+    @FXML
+    public void addSeuilExcel(ActionEvent actionEvent) {
+        App.logger.debug("addSeuilExcel");
+        if(newTabMoyenne.isEmpty()) {
+            Modal.showModalError("Aucun fichier importer");
+            return;
+        }
+
+        if(!isNumeric(seuilExcel.getText())) {
+            Modal.showModalError("Le seuil doit etre de type numérique");
+            return;
+        }
+
+        Double seuilExcelNumeric = Double.parseDouble(seuilExcel.getText());
+        if (seuilExcelNumeric < 0) {
+            Modal.showModalError("Le seuil doit etre supérieur à 0");
+            return;
+        }
+
+        lineChartGraphiqueExcel.getData().removeAll(lineSeuilExcel);
+
+        lineSeuilExcel = new XYChart.Series();
+        lineSeuilExcel.setName("Seuil");
+        SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy");
+        String dateStringStart = format.format(newTabMoyenne.get(0).getDate());
+        String dateStringEnd = format.format(newTabMoyenne.get(newTabMoyenne.size() - 1).getDate());
+        lineSeuilExcel.getData().add(new XYChart.Data(dateStringStart, seuilExcelNumeric));
+        lineSeuilExcel.getData().add(new XYChart.Data(dateStringEnd , seuilExcelNumeric));
+
+        lineChartGraphiqueExcel.getData().add(lineSeuilExcel);
+
+        Import importFile = new Import();
+        Modal.showModalInfo("Le seuil a été dépassé " + importFile.get_nb_threshold_passed(newTabMoyenne, seuilExcelNumeric)
+                                + " sur le graphe"
+                                + "\n Le seuil a été dépassé " + importFile.get_nb_threshold_passed(linesExcel, seuilExcelNumeric)
+                                + " dans tous le fichier");
+    }
+
+    @FXML
+    public void removeSeuilExcel(ActionEvent actionEvent) {
+        lineChartGraphiqueExcel.getData().removeAll(lineSeuilExcel);
+    }
+
+    @FXML
+    public void fastChangeExcel(ActionEvent actionEvent) {
+        App.logger.debug("lowfastChangeExcel");
+        if(newTabMoyenne.isEmpty()) {
+            Modal.showModalError("Aucun fichier importer");
+            return;
+        }
+
+        if(!isNumeric(seuilExcel.getText())) {
+            Modal.showModalError("Le seuil doit etre de type numérique");
+            return;
+        }
+
+        if(!isNumeric(nbMinute.getText())) {
+            Modal.showModalError("Le nombre de minute doit etre de type numérique");
+            return;
+        }
+
+        Double seuilExcelNumeric = Double.parseDouble(seuilExcel.getText());
+        if (seuilExcelNumeric < 0) {
+            Modal.showModalError("Le seuil doit etre supérieur à 0");
+            return;
+        }
+
+        Long nbMinuteNumeric = Long.parseLong(nbMinute.getText());
+        if (nbMinuteNumeric < 0) {
+            Modal.showModalError("Le seuil doit etre supérieur à 0");
+            return;
+        }
+
+        Import importFile = new Import();
+        ArrayList<Recording> recordingByFile = importFile.get_fast_changes_minute(linesExcel, seuilExcelNumeric, nbMinuteNumeric);
+        String message = "";
+        for (Recording value : recordingByFile) {
+            message += value.toString() + "\n";
+        }
+        Modal.showModalInfoExtend(message, "Hausse : (" + recordingByFile.size() + ")");
+    }
+    @FXML
+    public void lowChangeExcel(ActionEvent actionEvent) {
+        App.logger.debug("lowChangeExcel");
+        if(newTabMoyenne.isEmpty()) {
+            Modal.showModalError("Aucun fichier importer");
+            return;
+        }
+
+        if(!isNumeric(seuilExcel.getText())) {
+            Modal.showModalError("Le seuil doit etre de type numérique");
+            return;
+        }
+
+        if(!isNumeric(nbMinute.getText())) {
+            Modal.showModalError("Le nombre de minute doit etre de type numérique");
+            return;
+        }
+
+        Double seuilExcelNumeric = Double.parseDouble(seuilExcel.getText());
+        if (seuilExcelNumeric < 0) {
+            Modal.showModalError("Le seuil doit etre supérieur à 0");
+            return;
+        }
+
+        Long nbMinuteNumeric = Long.parseLong(nbMinute.getText());
+        if (nbMinuteNumeric < 0) {
+            Modal.showModalError("Le seuil doit etre supérieur à 0");
+            return;
+        }
+
+        Import importFile = new Import();
+        ArrayList<Recording> recordingByFile = importFile.get_low_changes_minute(linesExcel, seuilExcelNumeric, nbMinuteNumeric);
+        String message = "";
+        for (Recording value : recordingByFile) {
+            message += value.toStringBaisse() + "\n";
+        }
+        Modal.showModalInfoExtend(message, "Baisse : (" + recordingByFile.size() + ")");
+    }
+
+    private void generateChartLineExcel(ArrayList<Line> linesExcel) {
+        App.logger.debug("Generate Chart Line Excel");
+        lineChartGraphiqueExcel.getData().removeAll(seriesExcel);
+        seriesExcel = new XYChart.Series();
+        xNumberAxisExcel = new CategoryAxis();
+        yNumberAxisExcel = new NumberAxis();
+
+        ArrayList<Line> newTabMoyenneDay = createLineTabDay(linesExcel);
+        if (newTabMoyenneDay.size() >= 42) {
+            newTabMoyenne = createLineTabMonth(linesExcel);
+            seriesExcel.setName("Cotation Excel par mois");
+        } else {
+            newTabMoyenne = newTabMoyenneDay;
+            seriesExcel.setName("Cotation Excel par jour");
+        }
+
+        App.logger.debug(newTabMoyenneDay.toString());
+        App.logger.debug(newTabMoyenne.toString());
+
+        for (Line value : newTabMoyenne) {
+            SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy");
+            String dateString = format.format(value.getDate());
+            seriesExcel.getData().add(new XYChart.Data(dateString, value.getCurrent()));
+
+        }
+        lineChartGraphiqueExcel.getData().add(seriesExcel);
+        removeSeuilExcel(null);
+    }
+
+    private ArrayList<Line> createLineTabDay(ArrayList<Line> linesExcel) {
+        SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy");
+        String dateCompare = format.format(linesExcel.get(0).getDate());
+        ArrayList<Line> lineTransform = new ArrayList<Line>();
+        double sum = 0;
+        int nbLine = 0;
+        for (Line value : linesExcel) {
+            String dateString = format.format(value.getDate());
+            if (dateString.equals(dateCompare)) {
+                sum += value.getCurrent();
+                nbLine += 1;
+            } else {
+                Date date = null;
+                try {
+                    date = format.parse(dateCompare);
+                } catch (ParseException e) {
+                    Modal.showModalError(e.getMessage());
+                }
+                Line line = new Line(date, sum / nbLine);
+                lineTransform.add(line);
+                sum = value.getCurrent();
+                nbLine = 1;
+                dateCompare = format.format(value.getDate());
+            }
+        }
+        return lineTransform;
+    }
+
+    private ArrayList<Line> createLineTabMonth(ArrayList<Line> linesExcel) {
+        SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy");
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(linesExcel.get(0).getDate());
+        calendar.add(Calendar.MONTH, 1);
+        String dateCompare = format.format(calendar.getTime());
+        ArrayList<Line> lineTransform = new ArrayList<Line>();
+        double sum = 0;
+        int nbLine = 0;
+        for (Line value : linesExcel) {
+            String dateString = format.format(value.getDate());
+            if (dateString.equals(dateCompare)) {
+                // Recupere l'ancienne date
+                calendar.setTime(value.getDate());
+                calendar.add(Calendar.MONTH, -1);
+                Date lastdate = calendar.getTime();
+                Line line = new Line(lastdate, sum / nbLine);
+                lineTransform.add(line);
+                // Mise a jour des valeurs
+                calendar.setTime(value.getDate());
+                calendar.add(Calendar.MONTH, 1);
+                dateCompare = format.format(calendar.getTime());
+                sum = value.getCurrent();
+                nbLine = 1;
+            } else {
+                sum += value.getCurrent();
+                nbLine += 1;
+            }
+        }
+        // Ajout du dernier mois
+        Line lastLine = linesExcel.get(linesExcel.size() - 1);
+        Line line = new Line(lastLine.getDate(), sum / nbLine);
+        lineTransform.add(line);
+        return lineTransform;
+    }
         }
     }
 }
