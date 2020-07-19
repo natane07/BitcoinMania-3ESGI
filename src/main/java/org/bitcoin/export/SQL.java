@@ -1,5 +1,8 @@
 package org.bitcoin.export;
 
+import org.bitcoin.utils.BitcoinmaniaException;
+import org.bitcoin.utils.Error;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -24,7 +27,7 @@ public class SQL {
      * @param dateColumn Name of the first column
      * @param quotaColumn Name of the second column
      */
-    void createTable(String nameOfTable, String dateColumn, String quotaColumn) {
+    public void createTable(String nameOfTable, String dateColumn, String quotaColumn) {
         if (nameOfTable == null || dateColumn == null || quotaColumn == null) {
             System.err.println("Parameter can't be null");
             return;
@@ -39,13 +42,13 @@ public class SQL {
      * @param secondField Name of the second column
      * @param data Array of maps with data, ex : [{"date" : "19/09/2019", "quota" : 190.4}, {...}]
      */
-    void insertTable(String nameOfTable, String firstField, String secondField, ArrayList<Map<String, Object>> data) {
+    public void insertTable(String nameOfTable, String firstField, String secondField, ArrayList<Map<String, Object>> data) {
         if(nameOfTable == null ||firstField == null || secondField == null){
             System.err.println("Parameter can't be null");
             return;
         }
         for (Map<String, Object> i : data) {
-            this.fileContent += "INSERT INTO " + nameOfTable + "(" + firstField + ", " + secondField + ") VALUES( TO_DATE('" + i.get("date") + "', 'DD/MM/YYYY'), " + i.get("quota").toString() + ");\n";
+            this.fileContent += "INSERT INTO " + nameOfTable + "(" + firstField + ", " + secondField + ") VALUES('" + i.get("date") + "', " + i.get("quota").toString() + ");\n";
         }
     }
 
@@ -53,11 +56,13 @@ public class SQL {
      * Write a sql file with fileContent variable as the content
      * @param path Path where to write the file
      */
-    void writeSqlFile(String path) {
+    public void writeSqlFile(String path) throws BitcoinmaniaException {
         try {
             Files.write(Paths.get(path), fileContent.getBytes());
-        } catch (IOException err) {
-            System.err.println(err.getMessage());
+        } catch (IOException error) {
+            throw new BitcoinmaniaException(Error.ERROR_EXPORT_FILE_SQL_CODE,
+                    Error.ERROR_EXPORT_FILE_SQL_MSG,
+                    error);
         }
     }
 }

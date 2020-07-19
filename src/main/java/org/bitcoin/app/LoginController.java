@@ -98,4 +98,18 @@ public class LoginController {
         }
         Modal.showModalError(Error.ERROR_USER_LOGIN_MSG);
     }
+
+    @FXML
+    public void pass() {
+        Parent root = null;
+        try {
+            root = FXMLLoader.load(getClass().getResource("/bitcoin.fxml"));
+            App.stage.setScene(new Scene(root));
+            App.stage.show();
+            return;
+        } catch (Exception exception) {
+            Modal.showModalError(exception.getMessage());
+            return;
+        }
+    }
 }

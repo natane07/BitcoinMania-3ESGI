@@ -22,7 +22,7 @@ public class Launcher {
         sql.createTable("toast", "date_truc", "quota");
         sql.insertTable("toast","date_truc","quota", arr);
         String path = System.getProperty("user.dir") + File.separator + "sql.sql";
-        sql.writeSqlFile(path);
+//        sql.writeSqlFile(path);
         System.out.println(sql.getFileContent());
     }
 }

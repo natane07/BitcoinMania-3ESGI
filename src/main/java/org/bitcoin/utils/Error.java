@@ -33,5 +33,14 @@ public class Error {
     public static final int ERROR_LOGGER_DIR_CONTAINS_BAD_FILE = 501;
     public static final int ERROR_LOGGER_PARSE_LOGS_FILE_DATE = 502;
     public static final int ERROR_LOGGER_REMOVE_FILE = 503;
+
+    // Export file
+    public static final int ERROR_EXPORT_FILE_CSV_CODE = 600;
+    public static final String ERROR_EXPORT_FILE_CSV_MSG = "Erreur lors de l'écriture du fichier CSV";
+    public static final int ERROR_EXPORT_FILE_SQL_CODE = 601;
+    public static final String ERROR_EXPORT_FILE_SQL_MSG = "Erreur lors de l'écriture du fichier SQL";
+    public static final int ERROR_EXPORT_FILE_SQL_DATA_CODE = 603;
+    public static final String ERROR_EXPORT_FILE_SQL_DATA_MSG = "Les données de la table SQL pour l'export sont manquantes";
+
 }
 

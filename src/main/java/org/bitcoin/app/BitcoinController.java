@@ -1,5 +1,13 @@
 package org.bitcoin.app;
+import javafx.application.Platform;
+import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
+import javafx.stage.DirectoryChooser;
+import javafx.util.Pair;
+import org.bitcoin.export.Csv;
+import org.bitcoin.export.SQL;
 import org.bitcoin.utils.Error;
 
 import javafx.collections.FXCollections;
@@ -119,6 +127,16 @@ public class BitcoinController implements Initializable {
     @FXML
     private Label nameUser;
 
+    // Export SQL
+    @FXML
+    private TextField nameTable;
+
+    @FXML
+    private TextField nameColDate;
+
+    @FXML
+    private TextField nameColQuota;
+
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         App.logger.debug("initialize BitcoinController");
@@ -146,7 +164,9 @@ public class BitcoinController implements Initializable {
         xNumberAxis = new CategoryAxis();
         yNumberAxis = new NumberAxis(ApiBitcoin.getMinPriceBitcoin(), ApiBitcoin.getMaxPriceBitcoin(), 1000);
         series.setName("Cotation");
+
         for (String value:apiMoneyDollard) {
+            App.logger.warn(0, value + " " + ApiBitcoin.getPriceBitcoinWithDate(value), null);
             series.getData().add(new XYChart.Data(value, ApiBitcoin.getPriceBitcoinWithDate(value)));
         }
         lineChartGraphique.getData().add(series);
@@ -321,9 +341,9 @@ public class BitcoinController implements Initializable {
 
         Import importFile = new Import();
         Modal.showModalInfo("Le seuil a été dépassé " + importFile.get_nb_threshold_passed(newTabMoyenne, seuilExcelNumeric)
-                                + " sur le graphe"
+                                + " fois sur le graphe"
                                 + "\n Le seuil a été dépassé " + importFile.get_nb_threshold_passed(linesExcel, seuilExcelNumeric)
-                                + " dans tous le fichier");
+                                + " fois dans tous le fichier");
     }
 
     @FXML
@@ -534,6 +554,77 @@ public class BitcoinController implements Initializable {
             newPwd.setText("");
             confirmPwd.setText("");
         }
+    }
+
+    public void exportCsv(ActionEvent actionEvent) {
+        App.logger.debug("Export CSV");
+        DirectoryChooser directoryChooser = new DirectoryChooser();
+        File selectedDirectory = directoryChooser.showDialog(null);
+
+        if(selectedDirectory == null){
+            //No Directory selected
+            Modal.showModalError("Aucun dossier n'est séléctionné");
+            return;
+        }else{
+            System.out.println(selectedDirectory.getAbsolutePath());
+        }
+
+        var apiMoneyDollard = ApiBitcoin.currentPriceMarketBitcoin(minDateGraphique, maxDateGraphique);
+        Csv csvFile = new Csv();
+
+        try {
+            csvFile.whriteCsvFile(selectedDirectory.getAbsolutePath(), apiMoneyDollard);
+        } catch (BitcoinmaniaException error) {
+            Modal.showModalError(error.getMsgError());
+            return;
+        }
+        Modal.showModalInfo("Le fichier CSV a bien été exporté");
+    }
+
+    public void exportSql(ActionEvent actionEvent) {
+        App.logger.debug("Export SQL");
+
+        String nameTableString  = nameTable.getText();
+        String nameColDateString  = nameColDate.getText();
+        String nameColQuotaString  = nameColQuota.getText();
+
+        if(nameTableString.isBlank() || nameColDateString.isBlank() || nameColQuotaString.isBlank()) {
+            Modal.showModalError(Error.ERROR_EXPORT_FILE_SQL_DATA_MSG);
+            App.logger.error(Error.ERROR_EXPORT_FILE_SQL_DATA_CODE, Error.ERROR_EXPORT_FILE_SQL_DATA_MSG, null);
+            return;
+        }
+
+        DirectoryChooser directoryChooser = new DirectoryChooser();
+        File selectedDirectory = directoryChooser.showDialog(null);
+
+        if(selectedDirectory == null){
+            Modal.showModalError("Aucun dossier n'est séléctionné");
+            return;
+        }
+
+        var apiMoneyDollard = ApiBitcoin.currentPriceMarketBitcoin(minDateGraphique, maxDateGraphique);
+        SQL sql = new SQL();
+        ArrayList<Map<String, Object>> arr = new ArrayList<>();
+        for (String value : apiMoneyDollard) {
+            Map<String, Object> map = new HashMap<>();
+            System.out.println(value);
+            map.put("date", value);
+            map.put("quota", ApiBitcoin.getPriceBitcoinWithDate(value));
+            arr.add(map);
+        }
+
+        sql.createTable(nameTableString, nameColDateString, nameColQuotaString);
+        sql.insertTable(nameTableString,nameColDateString,nameColQuotaString, arr);
+        String path = selectedDirectory.getAbsolutePath() + File.separator + "BitcoinMania.sql";
+        try {
+            sql.writeSqlFile(path);
+        } catch (BitcoinmaniaException error) {
+            Modal.showModalError(error.getMsgError());
+            return;
+        }
+
+        Modal.showModalInfo("Le fichier SQL a été correctement exporter");
+
     }
 
 }
